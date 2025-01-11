@@ -1,4 +1,3 @@
-// pages/dashboard.js
 import { authenticate } from '../lib/auth';
 import dbConnect from '../lib/dbConnect';
 import User from '../models/User';
@@ -10,14 +9,20 @@ export default function Dashboard({ user }) {
     return (
       <div style={styles.container}>
         <h1>No estás autorizado para ver esta página.</h1>
+        <p>
+          Por favor, <a href="/auth/login">inicia sesión</a> para acceder.
+        </p>
       </div>
     );
   }
 
   return (
     <Layout user={user}>
-      <h1>Bienvenido, {user.email}</h1>
-      {/* Aquí irá el formulario para gestionar gastos */}
+      <div style={styles.container}>
+        <h1>Bienvenido, {user.email}</h1>
+        <p>Aquí puedes gestionar tus gastos y otros recursos.</p>
+        {/* Aquí puedes agregar más contenido como formularios o gráficas */}
+      </div>
     </Layout>
   );
 }
@@ -31,24 +36,47 @@ const styles = {
   },
 };
 
-// Función para obtener props del servidor
 export async function getServerSideProps(context) {
   const { req } = context;
 
-  // Parsear las cookies usando la librería 'cookie'
-  const parsedCookies = cookie.parse(req.headers.cookie || '');
-  const token = parsedCookies.token || null;
+  try {
+    // Leer y parsear las cookies del request
+    const parsedCookies = cookie.parse(req.headers.cookie || '');
+    const token = parsedCookies.token || null;
 
-  const user = authenticate(token);
+    // Autenticar al usuario
+    const user = authenticate(token);
 
-  if (user) {
-    await dbConnect();
-    // Buscar el usuario y excluir la contraseña
-    const existingUser = await User.findById(user.userId).select('-password').lean();
-    if (existingUser) {
-      return { props: { user: { email: existingUser.email } } };
+    if (user) {
+      // Conectar a la base de datos
+      await dbConnect();
+
+      // Buscar al usuario en la base de datos, excluyendo la contraseña
+      const existingUser = await User.findById(user.userId).select('-password').lean();
+
+      if (existingUser) {
+        return {
+          props: {
+            user: { email: existingUser.email },
+          },
+        };
+      }
     }
-  }
 
-  return { props: { user: null } };
+    // Si no hay token o el usuario no existe, redirigir al login
+    return {
+      redirect: {
+        destination: '/auth/login',
+        permanent: false,
+      },
+    };
+  } catch (error) {
+    console.error('Error en el servidor:', error);
+    return {
+      redirect: {
+        destination: '/auth/login',
+        permanent: false,
+      },
+    };
+  }
 }

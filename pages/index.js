@@ -1,32 +1,53 @@
-// pages/index.js
 import cookie from 'cookie';
-
-export default function Home() {
-  return null; // Puedes agregar un spinner o indicador de carga aquí si lo prefieres
-}
+import { authenticate } from '../lib/auth';
 
 export async function getServerSideProps(context) {
   const { req } = context;
 
-  // Leer las cookies del request
-  const parsedCookies = cookie.parse(req.headers.cookie || '');
-  const token = parsedCookies.token || null;
+  try {
+    // Validar si req y req.headers existen antes de intentar leer cookies
+    if (!req || !req.headers || !req.headers.cookie) {
+      console.warn('No hay cookies disponibles en la solicitud.');
+      return {
+        redirect: {
+          destination: '/auth/login',
+          permanent: false,
+        },
+      };
+    }
 
-  if (token) {
-    // Si el token existe, redirigir al dashboard
+    // Parsear las cookies del request
+    const parsedCookies = cookie.parse(req.headers.cookie || '');
+    const token = parsedCookies.token || null;
+
+    // Autenticar al usuario con el token
+    const user = authenticate(token);
+
+    if (user) {
+      // Si el token es válido, redirigir al dashboard
+      return {
+        redirect: {
+          destination: '/dashboard',
+          permanent: false,
+        },
+      };
+    }
+
+    // Redirigir al login si no hay token
     return {
       redirect: {
-        destination: '/dashboard',
+        destination: '/auth/login',
         permanent: false,
       },
     };
+  } catch (error) {
+    console.error('Error al procesar las cookies:', error);
+    return {
+      notFound: true,
+    };
   }
+}
 
-  // Si no hay token, redirigir a la página de login
-  return {
-    redirect: {
-      destination: '/auth/login',
-      permanent: false,
-    },
-  };
+export default function Home() {
+  return null; // La página no tiene contenido ya que siempre redirige
 }
