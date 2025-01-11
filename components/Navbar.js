@@ -32,21 +32,19 @@ export default function Navbar({ user }) {
         <Link href="/dashboard" className={styles.link}>
           Dashboard
         </Link>
-        <Link href="/expenses" className={styles.link}>
+        <Link href="/gastos" className={styles.link}>
           Gastos
         </Link>
+        <Link href="/mis-cuentas-generadas" className={styles.link}>
+          Mis Cuentas
+        </Link>
+        {/* Agrega más enlaces aquí si creas más páginas */}
       </div>
       <div className={styles.navRight}>
-        {user ? ( // Validación de que user está definido
-          <>
-            <span className={styles.userEmail}>Bienvenido, {user.email}</span>
-            <button onClick={handleLogout} className={styles.logoutButton}>
-              Cerrar Sesión
-            </button>
-          </>
-        ) : (
-          <p className={styles.userEmail}>Cargando usuario...</p>
-        )}
+        <span className={styles.userEmail}>Bienvenido, {user.email}</span>
+        <button onClick={handleLogout} className={styles.logoutButton}>
+          Cerrar Sesión
+        </button>
       </div>
     </nav>
   );
